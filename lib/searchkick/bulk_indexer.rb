@@ -6,7 +6,7 @@ module Searchkick
       @index = index
     end
 
-    def import_scope(relation, resume: false, method_name: nil, async: false, batch: false, batch_id: nil, full: false, scope: nil)
+    def import_scope(relation, resume: false, method_name: nil, async: false, batch: false, batch_id: nil, full: false, scope: nil, refresh: false)
       if scope
         relation = relation.send(scope)
       elsif relation.respond_to?(:search_import)
@@ -30,25 +30,25 @@ module Searchkick
         relation = relation.select("id").except(:includes, :preload) if async
 
         relation.find_in_batches batch_size: batch_size do |items|
-          import_or_update items, method_name, async
+          import_or_update items, method_name, async, refresh: refresh
         end
       else
         each_batch(relation) do |items|
-          import_or_update items, method_name, async
+          import_or_update items, method_name, async, refresh: refresh
         end
       end
     end
 
-    def bulk_index(records)
-      Searchkick.indexer.queue(records.map { |r| RecordData.new(index, r).index_data })
+    def bulk_index(records, **args)
+      Searchkick.indexer.queue(records.map { |r| RecordData.new(index, r).index_data }, **args)
     end
 
-    def bulk_delete(records)
-      Searchkick.indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(index, r).delete_data })
+    def bulk_delete(records, **args)
+      Searchkick.indexer.queue(records.reject { |r| r.id.blank? }.map { |r| RecordData.new(index, r).delete_data }, **args)
     end
 
-    def bulk_update(records, method_name)
-      Searchkick.indexer.queue(records.map { |r| RecordData.new(index, r).update_data(method_name) })
+    def bulk_update(records, method_name, **args)
+      Searchkick.indexer.queue(records.map { |r| RecordData.new(index, r).update_data(method_name) }, **args)
     end
 
     def batches_left

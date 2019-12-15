@@ -8,7 +8,7 @@ module Searchkick
     end
 
     def reindex(method_name = nil, refresh: false, mode: nil)
-      unless [:inline, true, nil, :async, :queue].include?(mode)
+      unless [:inline, true, nil, :async, :queue, :wait].include?(mode)
         raise ArgumentError, "Invalid value for mode"
       end
 
@@ -47,10 +47,10 @@ module Searchkick
           method_name ? method_name.to_s : nil,
           routing: routing
         )
+      when :wait
+        reindex_record(method_name, refresh: :wait_for)
       else # bulk, inline/true/nil
-        reindex_record(method_name)
-
-        index.refresh if refresh
+        reindex_record(method_name, refresh: refresh)
       end
     end
 
@@ -60,18 +60,18 @@ module Searchkick
       value.gsub("|", "||")
     end
 
-    def reindex_record(method_name)
+    def reindex_record(method_name, **args)
       if record.destroyed? || !record.persisted? || !record.should_index?
         begin
-          index.remove(record)
+          index.remove(record, **args)
         rescue Elasticsearch::Transport::Transport::Errors::NotFound
           # do nothing
         end
       else
         if method_name
-          index.update_record(record, method_name)
+          index.update_record(record, method_name, **args)
         else
-          index.store(record)
+          index.store(record, **args)
         end
       end
     end

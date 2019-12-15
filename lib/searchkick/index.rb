@@ -16,13 +16,13 @@ module Searchkick
       client.indices.create index: name, body: body
     end
 
-    def delete
+    def delete(**args)
       if alias_exists?
         # can't call delete directly on aliases in ES 6
         indices = client.indices.get_alias(name: name).keys
-        client.indices.delete index: indices
+        client.indices.delete index: indices, **args
       else
-        client.indices.delete index: name
+        client.indices.delete index: name, **args
       end
     end
 
@@ -30,8 +30,8 @@ module Searchkick
       client.indices.exists index: name
     end
 
-    def refresh
-      client.indices.refresh index: name
+    def refresh(**args)
+      client.indices.refresh index: name, **args
     end
 
     def alias_exists?
@@ -126,29 +126,29 @@ module Searchkick
     # record based
     # use helpers for notifications
 
-    def store(record)
-      bulk_indexer.bulk_index([record])
+    def store(record, **args)
+      bulk_indexer.bulk_index([record], **args)
     end
 
-    def remove(record)
-      bulk_indexer.bulk_delete([record])
+    def remove(record, **args)
+      bulk_indexer.bulk_delete([record], **args)
     end
 
-    def update_record(record, method_name)
-      bulk_indexer.bulk_update([record], method_name)
+    def update_record(record, method_name, **args)
+      bulk_indexer.bulk_update([record], method_name, **args)
     end
 
-    def bulk_delete(records)
-      bulk_indexer.bulk_delete(records)
+    def bulk_delete(records, **args)
+      bulk_indexer.bulk_delete(records, **args)
     end
 
-    def bulk_index(records)
-      bulk_indexer.bulk_index(records)
+    def bulk_index(records, **args)
+      bulk_indexer.bulk_index(records, **args)
     end
     alias_method :import, :bulk_index
 
-    def bulk_update(records, method_name)
-      bulk_indexer.bulk_update(records, method_name)
+    def bulk_update(records, method_name, **args)
+      bulk_indexer.bulk_update(records, method_name, **args)
     end
 
     def search_id(record)
@@ -187,13 +187,11 @@ module Searchkick
 
       if method_name
         # update
-        import_scope(relation, method_name: method_name, scope: scope)
-        self.refresh if refresh
+        import_scope(relation, method_name: method_name, scope: scope, refresh: refresh)
         true
       elsif scoped && !full
         # reindex association
-        import_scope(relation, scope: scope)
-        self.refresh if refresh
+        import_scope(relation, scope: scope, refresh: refresh)
         true
       else
         # full reindex

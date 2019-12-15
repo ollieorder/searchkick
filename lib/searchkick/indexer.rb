@@ -6,16 +6,16 @@ module Searchkick
       @queued_items = []
     end
 
-    def queue(items)
+    def queue(items, **args)
       @queued_items.concat(items)
-      perform unless Searchkick.callbacks_value == :bulk
+      perform(**args) unless Searchkick.callbacks_value == :bulk
     end
 
-    def perform
+    def perform(**args)
       items = @queued_items
       @queued_items = []
       if items.any?
-        response = Searchkick.client.bulk(body: items)
+        response = Searchkick.client.bulk(body: items, **args)
         if response["errors"]
           first_with_error = response["items"].map do |item|
             (item["index"] || item["delete"] || item["update"])

@@ -16,7 +16,7 @@ module Searchkick
   end
 
   module IndexWithInstrumentation
-    def store(record)
+    def store(record, **args)
       event = {
         name: "#{record.searchkick_klass.name} Store",
         id: search_id(record)
@@ -30,7 +30,7 @@ module Searchkick
       end
     end
 
-    def remove(record)
+    def remove(record, **args)
       name = record && record.searchkick_klass ? "#{record.searchkick_klass.name} Remove" : "Remove"
       event = {
         name: name,
@@ -45,7 +45,7 @@ module Searchkick
       end
     end
 
-    def update_record(record, method_name)
+    def update_record(record, method_name, **args)
       event = {
         name: "#{record.searchkick_klass.name} Update",
         id: search_id(record)
@@ -59,7 +59,7 @@ module Searchkick
       end
     end
 
-    def bulk_index(records)
+    def bulk_index(records, **args)
       if records.any?
         event = {
           name: "#{records.first.searchkick_klass.name} Import",
@@ -94,7 +94,7 @@ module Searchkick
       end
     end
 
-    def bulk_delete(records)
+    def bulk_delete(records, **args)
       if records.any?
         event = {
           name: "#{records.first.searchkick_klass.name} Delete",
@@ -113,7 +113,7 @@ module Searchkick
   end
 
   module IndexerWithInstrumentation
-    def perform
+    def perform(**args)
       if Searchkick.callbacks_value == :bulk
         event = {
           name: "Bulk",
