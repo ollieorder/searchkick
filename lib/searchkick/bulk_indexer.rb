@@ -57,7 +57,7 @@ module Searchkick
 
     private
 
-    def import_or_update(records, method_name, async)
+    def import_or_update(records, method_name, async, **args)
       if records.any?
         if async
           Searchkick::BulkReindexJob.perform_later(
@@ -72,9 +72,9 @@ module Searchkick
             with_retries do
               # call out to index for ActiveSupport notifications
               if method_name
-                index.bulk_update(records, method_name)
+                index.bulk_update(records, method_name, **args)
               else
-                index.bulk_index(records)
+                index.bulk_index(records, **args)
               end
             end
           end
