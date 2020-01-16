@@ -19,7 +19,7 @@ module Searchkick
 
       callbacks = options.key?(:callbacks) ? options[:callbacks] : :inline
 
-      unless [:inline, true, false, :async, :queue, :wait].include?(callbacks)
+      unless [:inline, true, false, :async, :queue, :wait].include?(callbacks.to_sym)
         raise ArgumentError, "Invalid value for callbacks"
       end
 
